@@ -1,0 +1,17 @@
+{
+  "name": "Base",
+  "install": "bash .cursor/scripts/install.sh",
+  "ports": [
+    {
+      "name": "docs",
+      "port": 8080
+    }
+  ],
+  "terminals": [
+    {
+      "name": "docs",
+      "command": "python3 -m http.server 8080 --bind 0.0.0.0 --directory public",
+      "description": "Serves the Base static site on port 8080"
+    }
+  ]
+}

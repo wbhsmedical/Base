@@ -2,4 +2,4 @@
 
 None. Product code lives on `main`.
 
-Old long-lived branches were landing pads. After this file, delete them — do not keep a fourth copy of `engine/` or a second chat SPA.
+Map: [PROJECT_ARCHITECTURE.md](PROJECT_ARCHITECTURE.md). Backlog: [TODO.md](TODO.md). Do not keep a fourth copy of `engine/` or a second chat SPA.

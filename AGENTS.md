@@ -1,3 +1,3 @@
 # Agents
 
-Follow **[README.md](README.md)** (§ AI agents). `main` holds extract, PPTX, and demarcation. Do not open long-lived duplicate-engine branches.
+Follow **[README.md](README.md)** (§ AI agents), **[PROJECT_ARCHITECTURE.md](PROJECT_ARCHITECTURE.md)**, and **[TODO.md](TODO.md)**.

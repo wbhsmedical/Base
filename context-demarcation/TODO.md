@@ -62,19 +62,19 @@ Python core on purpose: the in-progress PPTX engine is Python. One implementatio
 
 ---
 
-## Host: PPTX pipeline (`cursor/v0-v1-todos-6a38`)
+## Host: PPTX / extract on `main`
 
-Today: `ingest.prepare` → `job.ingest {kind, files}` → `llm._file_parts` attaches **all** files in **one** turn. `LoopHarness.tick` is a job-stage loop, not a page loop. Conversion already lives in `engine/ingest.py` (V1). Do not duplicate it here.
+`ingest.prepare` still writes `job.ingest`. `LoopHarness.tick` is a job-stage loop, not a page-analysis loop. Conversion lives in `engine/ingest.py` until the Conversion plugin exists. Do not duplicate it here.
 
-Plug in **without** touching Cordis or `engine/registry.py`:
+Plug in **without** Cordis or a second walker:
 
-1. After `ingest.prepare`, before first `tick`: run demarcation on `job.dir` (`source.pdf` or `source/page-XX.png`). Write `data/jobs/<id>/demarcation/plan.json`.
+1. After ingest, before first useful `tick`: `index` on `job.dir` → `data/jobs/<id>/demarcation/plan.json`.
 2. Keep `job.ingest` as the file manifest. Demarcation is a sibling, not a replacement.
-3. Windowing belongs in `_file_parts(job)`: attach focus + neighbors, not the whole corpus.
-4. Page loop belongs in `server._run` / `tick`: iterate units; `memory.md` logs observations. LCM later can replace this loop; same JSON.
-5. Generation can emit units too (`kind=slide`, uri → slide PNG/xml). Same windower for “don’t split a thought.” Reverse of analysis, same schema.
+3. Windowing belongs in `engine/parts.py`: attach focus + neighbors, not the whole corpus.
+4. Page-analysis looping belongs in extract `tick` (or future LCM), not in this package. `memory.md` logs observations.
+5. Generation can emit units too (`kind=slide`). Same windower for “don’t split a thought.”
 
-Do not import this package from `engine/harness.py`. Filesystem only, until a one-line `load_plan(job.dir)` is useful.
+Do not import this package from `engine/harness.py` beyond the existing `engine.parts` / CLI / files.
 
 ---
 

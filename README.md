@@ -4,6 +4,12 @@ OpenWebUI in front. Python gateway + jobs behind. OpenRouter is the only model A
 
 Sibling unmerged work (do not duplicate): **[UNMERGED.md](UNMERGED.md)**.
 
+## AI agents
+
+1. **Code.** Small functions, one obvious loop. Comments may be long. Code must stay short — handwritten gold, not verbose slop.
+2. **Branches.** Read [UNMERGED.md](UNMERGED.md) before you add a package, engine, or UI. New long-lived work gets a row there in the same change. Do not reimplement an owned seam off a silent copy of `main`.
+3. **Modular.** Plugins, tools, and disk contracts already exist (`tick()`, ingest, demarcation windows, gateway `/v1`, DSH wrappers). Future projects compose those. Lean: do not clone a second engine.
+
 ```bash
 pip install -r requirements.txt
 cp .env.example .env   # set OPENROUTER_API_KEY

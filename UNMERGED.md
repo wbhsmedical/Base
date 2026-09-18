@@ -2,7 +2,7 @@
 
 `main` is the empty Base stub. Product work lives on the branches below. **Read this file before adding a package, engine, or UI** — those trees already own the seams. Duplicating them on a fourth branch will conflict on merge.
 
-Update this table in the same PR when you open a new long-lived branch.
+**Agents:** if you create a long-lived branch, add a row here in the same change. Ownership first — do not duplicate a seam.
 
 | Branch | Owns | Does not own | Tree |
 |---|---|---|---|

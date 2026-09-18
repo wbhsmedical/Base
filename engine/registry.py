@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 
+from engine.harness import LoopHarness
 from engine.job import Job
 from engine.llm import FakeLLM, LLM, OpenRouterLLM
 from engine.pipeline import PipelineHarness
@@ -16,5 +17,8 @@ def make_llm(job: Job | None = None, model: str | None = None) -> LLM:
     return OpenRouterLLM()
 
 
-def make_harness(job: Job) -> PipelineHarness:
-    return PipelineHarness(make_llm(job))
+def make_harness(job: Job):
+    llm = make_llm(job)
+    if job.harness in ("loop", "pptx"):
+        return LoopHarness(llm)
+    return PipelineHarness(llm)

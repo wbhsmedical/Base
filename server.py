@@ -12,8 +12,8 @@ from urllib.parse import urlparse
 
 from engine.ingest import prepare_many
 from engine.job import Job, check_plan
-from engine.llm import PIPELINE_ID, openai_models, stream_chat
-from engine.messages import files_from, job_id_from, text_of
+from engine.llm import PIPELINE_ID, PPTX_ID, openai_models, stream_chat
+from engine.messages import JOB_RE, files_from, job_id_from, text_of
 from engine.registry import make_harness, make_llm
 
 MAX_TICKS = 200
@@ -51,10 +51,16 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(200, {"ok": True, "ui": "openwebui"})
         if u.path in ("/v1/models", "/models"):
             return self._json(200, openai_models())
+        parts = u.path.strip("/").split("/")
+        if len(parts) >= 2 and parts[0] in ("v1", "api") and parts[1] == "jobs":
+            return self._jobs_get(parts[2:])
         return self._json(404, {"error": "not found"})
 
     def do_POST(self):
         u = urlparse(self.path)
+        parts = u.path.strip("/").split("/")
+        if len(parts) >= 2 and parts[0] in ("v1", "api") and parts[1] == "jobs":
+            return self._jobs_post(parts[2:])
         if u.path not in ("/v1/chat/completions", "/chat/completions"):
             return self._json(404, {"error": "not found"})
         body = self._read_json()
@@ -62,8 +68,8 @@ class Handler(BaseHTTPRequestHandler):
         stream = bool(body.get("stream"))
         messages = body.get("messages") or []
         cid = "chatcmpl-" + uuid.uuid4().hex[:12]
-        if model == PIPELINE_ID or model.startswith("pipeline/"):
-            return self._pipeline(cid, body, messages, stream)
+        if model == PIPELINE_ID or model == PPTX_ID or model.startswith("pipeline/"):
+            return self._pipeline(cid, body, messages, stream, model)
         return self._chat(cid, body, model, messages, stream)
 
     def _chat(self, cid: str, body: dict, model: str, messages: list, stream: bool):
@@ -97,23 +103,38 @@ class Handler(BaseHTTPRequestHandler):
         text = one_shot(model, messages, extra)
         return self._json(200, complete_obj(cid, model, text))
 
-    def _pipeline(self, cid: str, body: dict, messages: list, stream: bool):
+    def _pipeline(self, cid: str, body: dict, messages: list, stream: bool, model: str):
+        pptx = model == PPTX_ID or model.endswith("/pptx")
+        harness = "loop" if pptx else "pipeline"
         job_id = job_id_from(messages)
         files = files_from(messages)
         if job_id:
             try:
                 job = Job.load(job_id)
             except FileNotFoundError:
-                job = Job.create(model=body.get("worker_model") or os.environ.get("PIPELINE_MODEL", "local/fake"))
+                job = Job.create(
+                    model=body.get("worker_model") or os.environ.get("PIPELINE_MODEL", "local/fake"),
+                    harness=harness,
+                )
         else:
-            model = body.get("worker_model") or os.environ.get("PIPELINE_MODEL") or (
-                "local/fake" if os.environ.get("GATEWAY_FAKE") else os.environ.get("OPENROUTER_FAVORITES", "deepseek/deepseek-chat").split(",")[0]
+            worker = body.get("worker_model") or os.environ.get("PIPELINE_MODEL") or (
+                "local/fake"
+                if os.environ.get("GATEWAY_FAKE")
+                else os.environ.get("OPENROUTER_FAVORITES", "deepseek/deepseek-chat").split(",")[0]
             )
-            job = Job.create(model=model.strip(), source_name="upload")
+            job = Job.create(model=worker.strip(), source_name="upload", harness=harness)
         if files:
             job.ingest = prepare_many(job.dir, files)
             check_plan(job, "Ingest source")
             job.save()
+        if job.pending_question:
+            ans = JOB_RE.sub("", text_of(messages[-1].get("content") if messages else "")).strip()
+            if ans:
+                job.append_memory(f"\nUser answer: {ans}")
+                job.pending_question = None
+                job.paused = False
+                job.stage = "running"
+                job.save()
         chunks: list[str] = []
 
         def emit(s: str):
@@ -141,14 +162,89 @@ class Handler(BaseHTTPRequestHandler):
             if st != "continue":
                 break
         emit(f"\n<!--job:{job.id}-->\nstatus: {st}\n")
+        if job.pending_question:
+            emit(f"question: {job.pending_question}\n")
         if job.plan_md().is_file():
             emit("\n" + job.plan_md().read_text(encoding="utf-8")[:4000])
+        deck = job.path("out", "deck.pptx")
+        if deck.is_file():
+            emit(f"\ndeck: /v1/jobs/{job.id}/download\n")
         if stream:
             self.wfile.write(sse_chunk(cid, "", done=True))
             self.wfile.write(b"data: [DONE]\n\n")
             self.wfile.flush()
             return
-        return self._json(200, complete_obj(cid, PIPELINE_ID, "".join(chunks)))
+        return self._json(200, complete_obj(cid, model or PIPELINE_ID, "".join(chunks)))
+
+    def _jobs_get(self, rest: list[str]):
+        if not rest:
+            return self._json(404, {"error": "not found"})
+        job = self._job(rest[0])
+        if not job:
+            return
+        if len(rest) == 1:
+            return self._json(200, job.public())
+        if rest[1] == "download":
+            path = job.path("out", "deck.pptx")
+            if not path.is_file() or job.stage != "done":
+                return self._json(404, {"error": "deck not ready"})
+            data = path.read_bytes()
+            self.send_response(200)
+            self.send_header(
+                "Content-Type",
+                "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            )
+            self.send_header("Content-Disposition", f'attachment; filename="{job.id}.pptx"')
+            self.send_header("Content-Length", str(len(data)))
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(data)
+            return
+        return self._json(404, {"error": "not found"})
+
+    def _jobs_post(self, rest: list[str]):
+        if len(rest) != 2:
+            return self._json(404, {"error": "not found"})
+        job = self._job(rest[0])
+        if not job:
+            return
+        op = rest[1]
+        if op == "pause":
+            job.paused = True
+            job.stage = "paused"
+            job.save()
+            return self._json(200, job.public())
+        if op == "resume":
+            if job.stage == "done":
+                return self._json(400, {"error": "already done"})
+            job.paused = False
+            if job.pending_question:
+                job.stage = "waiting_clarify"
+            else:
+                job.stage = "running"
+            job.save()
+            return self._json(200, Job.load(job.id).public())
+        if op == "answer":
+            body = self._read_json()
+            text = (body.get("text") or "").strip()
+            if not text:
+                return self._json(400, {"error": "empty answer"})
+            if not job.pending_question:
+                return self._json(400, {"error": "no pending question"})
+            job.append_memory(f"\nUser answer: {text}")
+            job.pending_question = None
+            job.paused = False
+            job.stage = "running"
+            job.save()
+            return self._json(200, Job.load(job.id).public())
+        return self._json(404, {"error": "not found"})
+
+    def _job(self, job_id: str):
+        try:
+            return Job.load(job_id)
+        except FileNotFoundError:
+            self._json(404, {"error": "unknown job"})
+            return None
 
     def _read_json(self) -> dict:
         n = int(self.headers.get("Content-Length") or 0)

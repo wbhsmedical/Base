@@ -31,6 +31,7 @@ def test_models(httpd):
     body = json.loads(r.read())
     ids = {m["id"] for m in body["data"]}
     assert "pipeline/extract" in ids
+    assert "pipeline/pptx" in ids
     assert "local/fake" in ids
 
 
@@ -106,4 +107,51 @@ def test_pipeline_stream(httpd, tmp_path, monkeypatch):
     assert "data: " in raw
     assert "[DONE]" in raw
     assert "pipeline/extract" in raw or "job:" in raw
+
+
+def test_pptx_pipeline_clarify_and_download(httpd, tmp_path, monkeypatch):
+    monkeypatch.setenv("BASE_DATA", str(tmp_path / "jobs"))
+    from PIL import Image
+    import base64
+    import io
+    import re
+
+    buf = io.BytesIO()
+    Image.new("RGB", (16, 16), "white").save(buf, "PNG")
+    b64 = base64.b64encode(buf.getvalue()).decode()
+    msg = {
+        "role": "user",
+        "content": [
+            {"type": "text", "text": "make a deck"},
+            {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64}"}},
+        ],
+    }
+    c = _conn(httpd)
+    c.request(
+        "POST",
+        "/v1/chat/completions",
+        json.dumps({"model": "pipeline/pptx", "messages": [msg], "stream": False}),
+        {"Content-Type": "application/json"},
+    )
+    r = c.getresponse()
+    text = json.loads(r.read())["choices"][0]["message"]["content"]
+    assert "status: waiting" in text
+    jid = re.search(r"<!--job:([a-f0-9]{12})-->", text).group(1)
+    follow = {
+        "role": "user",
+        "content": f"<!--job:{jid}-->\nexec team",
+    }
+    c.request(
+        "POST",
+        "/v1/chat/completions",
+        json.dumps({"model": "pipeline/pptx", "messages": [follow], "stream": False}),
+        {"Content-Type": "application/json"},
+    )
+    r = c.getresponse()
+    text = json.loads(r.read())["choices"][0]["message"]["content"]
+    assert "status: done" in text
+    c.request("GET", f"/v1/jobs/{jid}/download")
+    d = c.getresponse()
+    assert d.status == 200
+    assert d.read()[:2] == b"PK"
 

@@ -13,4 +13,4 @@ Python hosts: `from core import index, load, window_for`.
 
 DeepSeek Harness: add this directory (`dsh plugin add …`); tools shell into `python3 -m core`.
 
-PPTX pipeline: after `ingest.prepare`, `index(job.dir, job.dir / "demarcation")`. Window in `_file_parts`. Do not import Cordis.
+PPTX / extract hosts: after ingest, `index(job.dir, job.dir / "demarcation")` via `engine.parts.index_job`. Window in `window_parts`. Do not import Cordis.

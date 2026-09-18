@@ -22,13 +22,13 @@ JSON/files on disk are the contract. Do not merge the PPTX engine into this tree
 
 ---
 
-## Reuse (unmerged — depend on contracts, do not swallow)
+## Reuse (on `main`)
 
-From `cursor/v0-v1-todos-6a38`: OpenRouter parts, `Job` dir, `tick()`, ingest, QA gate, pause/clarify.
+PPTX loop: OpenRouter parts, `Job` dir, `tick()`, ingest, QA gate, pause/clarify — `pipeline/pptx`.
 
-From `cursor/context-demarcation-todo-efe3`: `plan.json` + `windows.jsonl`; after ingest, window in `_file_parts` (focus + neighbors, never the whole corpus).
+Demarcation: `plan.json` + `windows.jsonl`; after ingest, window in `engine/parts.py` (focus + neighbors, never the whole corpus).
 
-OpenRouter client today is PPTX-action JSON + three pinned models. Chat needs stream + live `/models`. Same HTTP, thinner wrapper.
+Chat: stream + live `/models`. PPTX favorites are listed; the gateway is not locked to three ids.
 
 ---
 
@@ -57,6 +57,7 @@ Resume = reread the plan file. Crash-safe. One retry then flag.
 - [x] Hook demarcation after ingest (sibling `demarcation/` under the job dir)
 - [x] Pipeline `tick()`: plan parse, spawn, validate sections, checkpoint
 - [x] DSH last: demarcation Cordis tools in-tree (`context-demarcation/dsh`); point DSH’s OpenAI/LLM base at this gateway `/v1` (no second algorithm). Runtime install of `dsh web` is ops, not this repo.
+- [x] PPTX `tick()` plugin (`pipeline/pptx`): python-pptx / pptxgenjs, clarify, QA, download — no second SPA.
 
 Config (not forks): base URL, favorites, `k`, globs, pipeline vs chat.
 
@@ -66,5 +67,5 @@ Config (not forks): base URL, favorites, `k`, globs, pipeline vs chat.
 
 - A second chat UI (no SPA competing with OpenWebUI)
 - Dumping 40 pages into one session
-- Merging PPTX + demarcation + this into one package
+- Merging PPTX + demarcation + extract into one harness (two `tick()` plugins is the point)
 - Implementing DSH before chat + pipeline work

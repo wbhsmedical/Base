@@ -6,7 +6,7 @@ import json
 import os
 import time
 import uuid
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, fields
 from pathlib import Path
 from typing import Any
 
@@ -21,7 +21,8 @@ def data_dir() -> Path:
 class Job:
     id: str
     model: str
-    harness: str = "pipeline"
+    harness: str = "pipeline"  # pipeline | loop
+    backend: str = "python"  # python | js (PPTX loop only)
     stage: str = "running"  # running | paused | waiting_clarify | done | failed
     paused: bool = False
     pending_question: str | None = None
@@ -57,13 +58,15 @@ class Job:
 
     def public(self) -> dict[str, Any]:
         d = asdict(self)
+        d["has_deck"] = (self.dir / "out" / "deck.pptx").is_file() and self.stage == "done"
         d["memory"] = self.memory()
         return d
 
     @classmethod
     def load(cls, job_id: str) -> Job:
         raw = json.loads((data_dir() / job_id / "job.json").read_text(encoding="utf-8"))
-        return cls(**raw)
+        known = {f.name for f in fields(cls)}
+        return cls(**{k: v for k, v in raw.items() if k in known})
 
     @classmethod
     def create(cls, **kw: Any) -> Job:
@@ -72,16 +75,26 @@ class Job:
         job.dir.mkdir(parents=True, exist_ok=True)
         for name in ("work", "out", "source", "input"):
             (job.dir / name).mkdir(exist_ok=True)
-        (job.dir / "memory.md").write_text(
-            "# Plan\n"
-            "- [ ] Ingest source\n"
-            "- [ ] Demarcate\n"
-            "- [ ] Survey\n"
-            "- [ ] Extract\n"
-            "- [ ] Review\n\n"
-            "# Log\n",
-            encoding="utf-8",
-        )
+        if job.harness in ("loop", "pptx"):
+            plan = (
+                "# Plan\n"
+                "- [ ] Ingest source\n"
+                "- [ ] Draft slides\n"
+                "- [ ] Build pptx\n"
+                "- [ ] QA\n\n"
+                "# Log\n"
+            )
+        else:
+            plan = (
+                "# Plan\n"
+                "- [ ] Ingest source\n"
+                "- [ ] Demarcate\n"
+                "- [ ] Survey\n"
+                "- [ ] Extract\n"
+                "- [ ] Review\n\n"
+                "# Log\n"
+            )
+        (job.dir / "memory.md").write_text(plan, encoding="utf-8")
         job.save()
         return job
 

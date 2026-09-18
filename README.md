@@ -1,17 +1,24 @@
 # Base
 
-Cloud Agent stub. **Unmerged product work is not on `main`.**
+OpenWebUI in front. Python gateway behind it (`/v1`). Jobs on disk.
 
-Start here: **[UNMERGED.md](UNMERGED.md)** — branches, ownership, what not to duplicate.
+```bash
+docker compose up --build
+# OpenWebUI :8080  gateway :8000/health
+```
 
-| Branch | One line |
+| Piece | What it is |
 |---|---|
-| [`cursor/v0-v1-todos-6a38`](https://github.com/wbhsmedical/Base/tree/cursor/v0-v1-todos-6a38) | PPTX pipeline |
-| [`cursor/context-demarcation-todo-efe3`](https://github.com/wbhsmedical/Base/tree/cursor/context-demarcation-todo-efe3) | Context demarcation |
-| [`cursor/plan-d-openwebui-todo-9f4c`](https://github.com/wbhsmedical/Base/tree/cursor/plan-d-openwebui-todo-9f4c) | OpenWebUI + OpenRouter gateway |
+| **OpenWebUI** | The only UI. Pick chat, `pipeline/extract`, or `pipeline/pptx`. |
+| **Gateway** | `server.py` — `/v1/models`, `/v1/chat/completions`, job pause/answer/download. |
+| **Extract** | `engine/pipeline.py` — ingest → demarcation windows → survey → one-Q workers → review. |
+| **PPTX** | `engine/harness.py` — ingest → windowed source → `ask_user` / python-pptx or pptxgenjs → QA. |
+| **Demarcation** | `context-demarcation/` — `plan.json` + `windows.jsonl`. Never attach the whole corpus. |
+
+Set `OPENROUTER_API_KEY`. Favorites default to Opus 5, GLM 5.3, Kimi K3, plus DeepSeek/Gemini.
 
 ## AI agents
 
-1. **Code.** Small functions, one obvious loop. Comments may be long. Code must stay short — handwritten gold, not verbose slop.
-2. **Branches.** Read [UNMERGED.md](UNMERGED.md) before you add a package, engine, or UI. New long-lived work gets a row there in the same change. Do not reimplement an owned seam off a silent copy of `main`.
-3. **Modular.** Plugins, tools, and disk contracts already exist (`tick()`, ingest, demarcation windows, gateway `/v1`, DSH wrappers). Future projects compose those. Lean: do not clone a second engine.
+1. **Code.** Small functions, one obvious loop. Comments may be long. Code must stay short.
+2. **One tree.** Work on `main` (or a short-lived PR branch). Do not resurrect `engine/` on a sidecar branch.
+3. **Plugins.** `tick()` harnesses, ingest, windows, gateway `/v1`, DSH wrappers. Compose those. Do not clone a second engine or a second chat SPA.

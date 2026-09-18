@@ -35,3 +35,27 @@ def test_ingest_png(tmp_path):
     info = prepare(d, "a.png", b"\x89PNG\r\n")
     assert info["kind"] == "images"
     assert (d / info["files"][0]).is_file()
+
+
+def test_ingest_docx_to_images(tmp_path):
+    import zipfile
+    from io import BytesIO
+
+    buf = BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        z.writestr(
+            "[Content_Types].xml",
+            '<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"></Types>',
+        )
+        z.writestr(
+            "word/document.xml",
+            '<?xml version="1.0"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
+            "<w:body><w:p><w:r><w:t>Docx body text here</w:t></w:r></w:p></w:body></w:document>",
+        )
+    d = tmp_path / "j"
+    d.mkdir()
+    (d / "source").mkdir()
+    info = prepare(d, "a.docx", buf.getvalue())
+    assert info["kind"] == "images"
+    assert info["files"]
+    assert (d / info["files"][0]).is_file()

@@ -12,6 +12,13 @@ OPENROUTER = "https://openrouter.ai/api/v1"
 CHAT = OPENROUTER + "/chat/completions"
 MODELS = OPENROUTER + "/models"
 PIPELINE_ID = "pipeline/extract"
+PPTX_ID = "pipeline/pptx"
+# V0 PPTX dropdown. Still listed first; chat can pick any live OpenRouter id.
+PPTX_MODELS = [
+    ("anthropic/claude-opus-5", "Claude Opus 5"),
+    ("z-ai/glm-5.3", "GLM 5.3"),
+    ("moonshotai/kimi-k3", "Kimi K3"),
+]
 
 
 def _headers() -> dict[str, str]:
@@ -31,13 +38,19 @@ def _urlopen(req: urllib.request.Request, timeout: int = 180):
 
 
 def favorites() -> list[str]:
-    raw = os.environ.get("OPENROUTER_FAVORITES", "deepseek/deepseek-chat,google/gemini-2.0-flash-001")
+    default = ",".join(
+        [mid for mid, _ in PPTX_MODELS] + ["deepseek/deepseek-chat", "google/gemini-2.0-flash-001"]
+    )
+    raw = os.environ.get("OPENROUTER_FAVORITES", default)
     return [x.strip() for x in raw.split(",") if x.strip()]
 
 
 def list_models() -> list[dict[str, str]]:
-    """OpenAI-style rows. pipeline/extract is ours; the rest are OpenRouter ids."""
-    rows = [{"id": PIPELINE_ID, "label": "Pipeline extract"}]
+    """OpenAI-style rows. pipeline/* are ours; the rest are OpenRouter ids."""
+    rows = [
+        {"id": PIPELINE_ID, "label": "Pipeline extract"},
+        {"id": PPTX_ID, "label": "Pipeline PPTX"},
+    ]
     if os.environ.get("GATEWAY_FAKE"):
         rows.append({"id": "local/fake", "label": "Fake (tests)"})
         for mid in favorites():
@@ -61,7 +74,12 @@ def openai_models() -> dict:
     return {
         "object": "list",
         "data": [
-            {"id": r["id"], "object": "model", "created": 0, "owned_by": "openrouter" if r["id"] != PIPELINE_ID else "base"}
+            {
+                "id": r["id"],
+                "object": "model",
+                "created": 0,
+                "owned_by": "base" if r["id"].startswith("pipeline/") else "openrouter",
+            }
             for r in list_models()
         ],
     }
@@ -156,4 +174,42 @@ class FakeLLM(LLM):
             )
         if "PHASE=review" in user:
             return "# Chapter_Error_Report\n\nNo issues in fake run.\n"
+        if "write_script" in system or "Produce the next action JSON" in user:
+            if "User answer:" not in user:
+                return json.dumps({"action": "ask_user", "question": "Who is the audience for this deck?"})
+            audience = "general"
+            for line in user.splitlines():
+                if line.startswith("User answer:"):
+                    audience = line.split(":", 1)[1].strip() or "general"
+            src = "source"
+            for line in user.splitlines():
+                if line.startswith("source="):
+                    src = line.split("=", 1)[1].strip().replace("'", "")
+            script = f"""import os
+from pptx import Presentation
+from pptx.util import Inches, Pt
+
+prs = Presentation()
+prs.slide_width = Inches(13.333)
+prs.slide_height = Inches(7.5)
+blank = prs.slide_layouts[6]
+
+def slide(title, body):
+    s = prs.slides.add_slide(blank)
+    t = s.shapes.add_textbox(Inches(0.7), Inches(0.4), Inches(12), Inches(1.2))
+    p = t.text_frame.paragraphs[0]
+    p.text = title
+    p.font.size = Pt(32)
+    p.font.bold = True
+    b = s.shapes.add_textbox(Inches(0.7), Inches(1.8), Inches(12), Inches(5))
+    b.text_frame.word_wrap = True
+    b.text_frame.paragraphs[0].text = body
+    b.text_frame.paragraphs[0].font.size = Pt(20)
+
+slide("Source briefing", "File: {src}")
+slide("Audience", {audience!r})
+slide("Next", "Deck generated from the uploaded source after clarification.")
+prs.save(os.environ["PPTX_OUT"])
+"""
+            return json.dumps({"action": "write_script", "backend": "python", "script": script})
         return "ok"

@@ -6,7 +6,7 @@ services:
       - "8000:8000"
     environment:
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
-      OPENROUTER_FAVORITES: ${OPENROUTER_FAVORITES:-deepseek/deepseek-chat,google/gemini-2.0-flash-001}
+      OPENROUTER_FAVORITES: ${OPENROUTER_FAVORITES:-anthropic/claude-opus-5,z-ai/glm-5.3,moonshotai/kimi-k3,deepseek/deepseek-chat,google/gemini-2.0-flash-001}
       PIPELINE_MODEL: ${PIPELINE_MODEL:-deepseek/deepseek-chat}
       HOST: 0.0.0.0
       PORT: "8000"

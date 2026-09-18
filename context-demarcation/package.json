@@ -1,0 +1,9 @@
+{
+  "name": "dsh-context-demarcation",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dsh/index.js",
+  "files": ["dsh", "core", "schema"],
+  "keywords": ["dsh-plugin", "context-demarcation"],
+  "dsh": { "bundle": { "patch": "./dsh/cordis.patch.yml" } }
+}

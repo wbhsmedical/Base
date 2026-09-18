@@ -76,3 +76,34 @@ def test_pipeline_via_api(httpd, tmp_path, monkeypatch):
     assert "<!--job:" in text
     assert "status: done" in text
     assert "Q1" in text
+
+
+def test_pipeline_stream(httpd, tmp_path, monkeypatch):
+    monkeypatch.setenv("BASE_DATA", str(tmp_path / "jobs"))
+    from PIL import Image
+    import base64
+    import io
+
+    buf = io.BytesIO()
+    Image.new("RGB", (16, 16), "white").save(buf, "PNG")
+    b64 = base64.b64encode(buf.getvalue()).decode()
+    msg = {
+        "role": "user",
+        "content": [
+            {"type": "text", "text": "extract"},
+            {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64}"}},
+        ],
+    }
+    c = _conn(httpd)
+    c.request(
+        "POST",
+        "/v1/chat/completions",
+        json.dumps({"model": "pipeline/extract", "messages": [msg], "stream": True}),
+        {"Content-Type": "application/json"},
+    )
+    r = c.getresponse()
+    raw = r.read().decode()
+    assert "data: " in raw
+    assert "[DONE]" in raw
+    assert "pipeline/extract" in raw or "job:" in raw
+

@@ -56,7 +56,7 @@ Resume = reread the plan file. Crash-safe. One retry then flag.
 - [x] Attach files via existing part shapes; still no full-corpus attach
 - [x] Hook demarcation after ingest (sibling `demarcation/` under the job dir)
 - [x] Pipeline `tick()`: plan parse, spawn, validate sections, checkpoint
-- [ ] DSH last: OpenRouter on `ctx.llm`; demarcation tools already designed; same files
+- [x] DSH last: demarcation Cordis tools in-tree (`context-demarcation/dsh`); point DSH’s OpenAI/LLM base at this gateway `/v1` (no second algorithm). Runtime install of `dsh web` is ops, not this repo.
 
 Config (not forks): base URL, favorites, `k`, globs, pipeline vs chat.
 

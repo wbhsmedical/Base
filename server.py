@@ -118,6 +118,16 @@ class Handler(BaseHTTPRequestHandler):
 
         def emit(s: str):
             chunks.append(s)
+            if stream:
+                self.wfile.write(sse_chunk(cid, s))
+                self.wfile.flush()
+
+        if stream:
+            self.send_response(200)
+            self.send_header("Content-Type", "text/event-stream")
+            self.send_header("Cache-Control", "no-cache")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
 
         h = make_harness(job)
         st = "continue"
@@ -133,10 +143,12 @@ class Handler(BaseHTTPRequestHandler):
         emit(f"\n<!--job:{job.id}-->\nstatus: {st}\n")
         if job.plan_md().is_file():
             emit("\n" + job.plan_md().read_text(encoding="utf-8")[:4000])
-        text = "".join(chunks)
         if stream:
-            return self._sse([sse_chunk(cid, text), sse_chunk(cid, "", done=True), b"data: [DONE]\n\n"])
-        return self._json(200, complete_obj(cid, PIPELINE_ID, text))
+            self.wfile.write(sse_chunk(cid, "", done=True))
+            self.wfile.write(b"data: [DONE]\n\n")
+            self.wfile.flush()
+            return
+        return self._json(200, complete_obj(cid, PIPELINE_ID, "".join(chunks)))
 
     def _read_json(self) -> dict:
         n = int(self.headers.get("Content-Length") or 0)
@@ -175,7 +187,7 @@ def main() -> None:
     host = os.environ.get("HOST", "0.0.0.0")
     port = int(os.environ.get("PORT", "8000"))
     httpd = ThreadingHTTPServer((host, port), Handler)
-    print(f"gateway on http://{host}:{port}  (OpenWebUI → /v1)")
+    print(f"gateway on http://{host}:{port}  (OpenWebUI → /v1)", flush=True)
     httpd.serve_forever()
 
 

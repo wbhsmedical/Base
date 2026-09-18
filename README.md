@@ -2,7 +2,12 @@
 
 OpenWebUI in front. Python gateway + jobs behind. OpenRouter is the only model API.
 
-Sibling unmerged work (do not duplicate): **[UNMERGED.md](UNMERGED.md)**.
+Still unmerged (do not duplicate): **[UNMERGED.md](UNMERGED.md)**.
+
+| Branch | One line |
+|---|---|
+| [`cursor/v0-v1-todos-6a38`](https://github.com/wbhsmedical/Base/tree/cursor/v0-v1-todos-6a38) | PPTX pipeline |
+| [`cursor/context-demarcation-todo-efe3`](https://github.com/wbhsmedical/Base/tree/cursor/context-demarcation-todo-efe3) | Context demarcation |
 
 ## AI agents
 

@@ -1,6 +1,6 @@
 # Unmerged work
 
-`main` is the empty Base stub. Product work lives on the branches below. **Read this file before adding a package, engine, or UI** — those trees already own the seams. Duplicating them on a fourth branch will conflict on merge.
+`main` has the OpenWebUI gateway (Plan D). These branches are still out. **Read this file before adding a package, engine, or UI** — they already own the seams. Duplicating them will conflict on merge.
 
 **Agents:** if you create a long-lived branch, add a row here in the same change. Ownership first — do not duplicate a seam.
 
@@ -8,7 +8,6 @@
 |---|---|---|---|
 | `cursor/v0-v1-todos-6a38` | PPTX pipeline: `engine/` (`tick()`, ingest, OpenRouter PDF/image parts, QA, job dir), `server.py`, PPTX UI | Demarcation algorithm, OpenWebUI, extract orchestrator | [tree](https://github.com/wbhsmedical/Base/tree/cursor/v0-v1-todos-6a38) |
 | `cursor/context-demarcation-todo-efe3` | Page index: `plan.json` + `windows.jsonl`, Python `core/`, thin DSH tools | Conversion, model loop, attaching the whole corpus | [tree](https://github.com/wbhsmedical/Base/tree/cursor/context-demarcation-todo-efe3) |
-| `cursor/plan-d-openwebui-todo-9f4c` | OpenWebUI compose, OpenAI-compatible gateway, chat + `pipeline/extract` (windowed workers) | PPTX backends, a second chat SPA | [tree](https://github.com/wbhsmedical/Base/tree/cursor/plan-d-openwebui-todo-9f4c) |
 
 ## Contracts (do not fork)
 

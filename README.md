@@ -2,6 +2,8 @@
 
 OpenWebUI in front. Python gateway + jobs behind. OpenRouter is the only model API.
 
+Sibling unmerged work (do not duplicate): **[UNMERGED.md](UNMERGED.md)**.
+
 ```bash
 pip install -r requirements.txt
 cp .env.example .env   # set OPENROUTER_API_KEY

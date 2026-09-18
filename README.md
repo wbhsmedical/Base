@@ -4,10 +4,11 @@ OpenWebUI in front. Python gateway + jobs behind. OpenRouter is the only model A
 
 Still unmerged (do not duplicate): **[UNMERGED.md](UNMERGED.md)**.
 
-| Branch | One line |
+| Where | One line |
 |---|---|
-| [`cursor/v0-v1-todos-6a38`](https://github.com/wbhsmedical/Base/tree/cursor/v0-v1-todos-6a38) | PPTX pipeline |
-| [`cursor/context-demarcation-todo-efe3`](https://github.com/wbhsmedical/Base/tree/cursor/context-demarcation-todo-efe3) | Context demarcation |
+| `main` (this tree) | OpenWebUI + OpenRouter gateway + `pipeline/extract` |
+| [`cursor/v0-v1-todos-6a38`](https://github.com/wbhsmedical/Base/tree/cursor/v0-v1-todos-6a38) | PPTX pipeline — rebase; overlaps `engine/` and `server.py` |
+| [`cursor/context-demarcation-todo-efe3`](https://github.com/wbhsmedical/Base/tree/cursor/context-demarcation-todo-efe3) | Demarcation source — already vendored here as `context-demarcation/` |
 
 ## AI agents
 

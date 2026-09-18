@@ -3,15 +3,19 @@
   "install": "bash .cursor/scripts/install.sh",
   "ports": [
     {
-      "name": "docs",
+      "name": "gateway",
+      "port": 8000
+    },
+    {
+      "name": "openwebui",
       "port": 8080
     }
   ],
   "terminals": [
     {
-      "name": "docs",
-      "command": "python3 -m http.server 8080 --bind 0.0.0.0 --directory public",
-      "description": "Serves the Base static site on port 8080"
+      "name": "gateway",
+      "command": "python3 server.py",
+      "description": "OpenAI-compatible gateway for OpenWebUI (port 8000)"
     }
   ]
 }

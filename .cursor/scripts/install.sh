@@ -19,7 +19,9 @@ if [[ ! -f README.md ]]; then
   exit 1
 fi
 
-mkdir -p .cursor public
+pip3 install -q -r "$REPO_ROOT/requirements.txt"
+
+mkdir -p .cursor public data
 date -u +"%Y-%m-%dT%H:%M:%SZ" > .cursor/.install-complete
 
 echo "==> Install complete ($(cat .cursor/.install-complete))"

@@ -50,12 +50,12 @@ Resume = reread the plan file. Crash-safe. One retry then flag.
 
 ## Build
 
-- [ ] Gateway: stream chat + model list; `OPENROUTER_API_KEY` server-side; OpenWebUI as the only client
-- [ ] OpenWebUI compose: our `/v1` as connection; accounts for colleagues; no custom chat SPA
-- [ ] Extract (copy-then-thin, don’t wait on merge): `jobs`, `ingest`, OpenRouter complete/stream
-- [ ] Attach files via existing part shapes; still no full-corpus attach
-- [ ] Hook demarcation after ingest (sibling `demarcation/` under the job dir)
-- [ ] Pipeline `tick()`: plan parse, spawn, validate sections, checkpoint
+- [x] Gateway: stream chat + model list; `OPENROUTER_API_KEY` server-side; OpenWebUI as the only client
+- [x] OpenWebUI compose: our `/v1` as connection; accounts for colleagues; no custom chat SPA
+- [x] Extract (copy-then-thin, don’t wait on merge): `jobs`, `ingest`, OpenRouter complete/stream
+- [x] Attach files via existing part shapes; still no full-corpus attach
+- [x] Hook demarcation after ingest (sibling `demarcation/` under the job dir)
+- [x] Pipeline `tick()`: plan parse, spawn, validate sections, checkpoint
 - [ ] DSH last: OpenRouter on `ctx.llm`; demarcation tools already designed; same files
 
 Config (not forks): base URL, favorites, `k`, globs, pipeline vs chat.

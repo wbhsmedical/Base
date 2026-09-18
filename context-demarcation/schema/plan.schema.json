@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://wbhsmedical.local/context-demarcation/plan.schema.json",
+  "title": "Context Demarcation Plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["v", "root", "k", "kind", "units", "cuts"],
+  "properties": {
+    "v": { "const": 1 },
+    "root": { "type": "string" },
+    "k": { "type": "integer", "minimum": 0 },
+    "kind": { "type": "string" },
+    "units": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "kind", "uri", "doc", "i", "n"],
+        "properties": {
+          "id": { "type": "string" },
+          "kind": { "type": "string" },
+          "uri": { "type": "string" },
+          "doc": { "type": "string" },
+          "i": { "type": "integer", "minimum": 0 },
+          "n": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "cuts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["at", "kind", "prev"],
+        "properties": {
+          "at": { "type": "string" },
+          "kind": { "enum": ["file", "folder", "name-seq", "blank", "phash"] },
+          "prev": { "type": "string" }
+        }
+      }
+    }
+  }
+}

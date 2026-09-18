@@ -16,10 +16,16 @@ echo "Git: $(git --version)"
 echo "Python: $(python3 --version)"
 echo "Repository: $(basename "$REPO_ROOT")"
 
-if curl -sf http://127.0.0.1:8080/ >/dev/null 2>&1; then
-  echo "Docs server: responding on http://127.0.0.1:8080/"
+if curl -sf http://127.0.0.1:8000/health >/dev/null 2>&1; then
+    echo "Gateway: responding on http://127.0.0.1:8000/"
 else
-  echo "Docs server: not running (start the docs terminal to serve public/)"
+    echo "Gateway: not running (start the gateway terminal)"
+fi
+
+if curl -sf http://127.0.0.1:8080/ >/dev/null 2>&1; then
+    echo "OpenWebUI: responding on http://127.0.0.1:8080/"
+else
+    echo "OpenWebUI: not running (docker compose up)"
 fi
 
 echo "==> Health check passed"
